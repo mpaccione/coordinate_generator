@@ -67,10 +67,10 @@ function outputCoordinateArr(coordArr, direction, diviser, system){
 function writeToFile(data, log){
 	const timestamp = new Date().getTime();
 
-	fs.writeFile(path.join(__dirname, `/output/Coord_Data_${timestamp}.txt`), data, (err) => {
+	fs.writeFile(path.join(__dirname, `/output/Coord_Data_${timestamp}.${type}`), data, (err) => {
 		err 
 		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `/output/Data_Info_${timestamp}.txt`), JSON.stringify(log), (err) => {
+		: fs.writeFile(path.join(__dirname, `/output/Data_Info_${timestamp}.json`), JSON.stringify(log), (err) => {
 			err ? console.warn(err) : console.log("File Write Successful");
 		  })
 	})
