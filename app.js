@@ -3,14 +3,15 @@
 ///////////////////////////////////////////
 
 // Modules
-const fs   = require('fs'),
-	  path = require('path');
+const fetch = require('isomorphic-fetch'), 
+	  fs    = require('fs'),
+	  path  = require('path');
 
 
 // Placeholder Data is Mt.Everest
 
 
-// [LONG, LAT] => [x, y]
+// [LAT, LONG, ALT] => [y, x, 0]
 const area		= 3600, // 60 x 60, 60KM^2
 	  coordArr  = [
 					[87.230674, 27.680334], // Top Left Corner
@@ -19,11 +20,11 @@ const area		= 3600, // 60 x 60, 60KM^2
 	  direction = "column", // or Row
 	  diviser   = 600, // √(area) * 10 => (0.1KM Points)
 	  system    = "km",
-	  type 		= "csv"; // or "json"
+	  type 		= "json"; // or "json"
 
 
 // Runtime
-outputCoordinateArr(coordArr, direction, diviser, system);
+outputCoordinateArr(coordArr, direction, diviser, system, type);
 
 
 // Functions
@@ -43,7 +44,7 @@ function outputCoordinateArr(coordArr, direction, diviser, system){
 			const x = direction == "column" ? longStart + (b * longIncr) : longStart + (a * longIncr),
 				  y = direction == "column" ? latStart + (a * latIncr) : latStart + (b * latStart);
 
-			type == "json" ? resultTxt += `${x},${y}` : resultArr.push([x,y]);
+			type == "csv" ? resultArr.push([y, x, 0]) : resultArr.push({"latitude": y, "longitude": x});
 		}
 	}
 
@@ -60,18 +61,72 @@ function outputCoordinateArr(coordArr, direction, diviser, system){
 		"latIncr"  : latIncr
 	};
 
-	type == "json" ? writeToFile(resultTxt, log) : writeToFile(resultArr, log);
+	writeToFile(resultArr, direction, "coordinates", log, type);
 }
 
 
-function writeToFile(data, log){
+function writeToFile(data, direction, directory, log, type){
 	const timestamp = new Date().getTime();
+	let   dataFixed;
 
-	fs.writeFile(path.join(__dirname, `/output/Coord_Data_${timestamp}.${type}`), data, (err) => {
+	dataFixed = type == "csv" ? "LAT,LONG,ALT\n"+data.map(e => e.join(",")).join("\n") : JSON.stringify(data);
+
+	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Data_${timestamp}.${type}`), dataFixed, (err) => {
 		err 
 		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `/output/Data_Info_${timestamp}.json`), JSON.stringify(log), (err) => {
-			err ? console.warn(err) : console.log("File Write Successful");
+		: fs.writeFile(path.join(__dirname, `/${directory}/Data_Info_${timestamp}.json`), JSON.stringify(log), (err) => {
+			if (err) {
+				console.warn(err);
+			} else {
+				console.log("File Write Successful");
+				if (type == "json") {
+					getElevationData(data, timestamp);
+				}
+			}
 		  })
 	})
+}
+
+function writeToFile2(data, directory, log, type){
+	const timestamp = new Date().getTime();
+
+	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Data_${timestamp}.${type}`), data, (err) => {
+		err 
+		? console.warn(err) 
+		: fs.writeFile(path.join(__dirname, `/${directory}/Data_Info_${timestamp}.json`), JSON.stringify(log), (err) => {
+			if (err) {
+				console.warn(err);
+			} else {
+				console.log("File Write Successful");
+				if (type == "json") {
+					getElevationData(data, timestamp);
+				}
+			}
+		  })
+	})
+}
+
+
+
+function getElevationData(data, timestamp){
+
+	const log = {
+		"url": 'https://api.open-elevation.com/api/v1/lookup',
+		headers: {
+	      'Accept': 'application/json',
+	      'Content-Type': 'application/json'
+	    },
+	    method: "POST",
+	    body: `See Coord_Data_${timestamp}.json in /coordinates/`	
+	}
+
+	fetch('https://api.open-elevation.com/api/v1/lookup', {
+		headers: {
+	      'Accept': 'application/json',
+	      'Content-Type': 'application/json'
+	    },
+	    method: "POST",
+	    body: JSON.stringify({ locations: data })
+	}).then(response => response.json()).then(result => { writeToFile2(result, 'altitude', log, 'json') }).catch(err => console.warn(err))
+
 }
