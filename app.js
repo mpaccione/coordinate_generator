@@ -3,9 +3,9 @@
 ///////////////////////////////////////////
 
 // Modules
-const fetch = require('isomorphic-fetch'), 
-	  fs    = require('fs'),
-	  path  = require('path');
+const fs   = require('fs'),
+	  https = require('https'), 
+	  path = require('path');
 
 
 // Placeholder Data is Mt.Everest
@@ -109,24 +109,37 @@ function writeToFile2(data, directory, log, type){
 
 
 function getElevationData(data, timestamp){
+	const postObj = JSON.stringify({ locations: data }), 
+		  options = {
+			hostname: 'api.open-elevation.com',
+			path: '/api/v1/lookup',
+			method: 'POST',
+			headers: {
+		      'Accept': 'application/json',
+		      'Content-Type': 'application/json'
+		    }
+		  },
+		  req = https.request(options, (res) => {
+					console.log(`statusCode: ${res.statusCode}`);
+					let result;
 
-	const log = {
-		"url": 'https://api.open-elevation.com/api/v1/lookup',
-		headers: {
-	      'Accept': 'application/json',
-	      'Content-Type': 'application/json'
-	    },
-	    method: "POST",
-	    body: `See Coord_Data_${timestamp}.json in /coordinates/`	
-	}
+					res.on('data', (d) => {
+						process.stdout.write(d);
+						result += d;
+					})
 
-	fetch('https://api.open-elevation.com/api/v1/lookup', {
-		headers: {
-	      'Accept': 'application/json',
-	      'Content-Type': 'application/json'
-	    },
-	    method: "POST",
-	    body: JSON.stringify({ locations: data })
-	}).then(response => response.json()).then(result => { writeToFile2(result, 'altitude', log, 'json') }).catch(err => console.warn(err))
+					res.on('end', () => {
+						writeToFile2(JSON.parse(result), 'altitude', options, 'json');
+					})
+				});
+
+	console.log(postObj);
+
+	req.on('error', (error) => {
+		console.error(error);
+	})
+
+	req.write(postObj);
+	req.end();
 
 }
