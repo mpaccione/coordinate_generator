@@ -90,10 +90,10 @@ function writeToFile(data, direction, directory, log, type){
 function writeToFile2(data, directory, log, type){
 	const timestamp = new Date().getTime();
 
-	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Data_${timestamp}.${type}`), data, (err) => {
+	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Output_${timestamp}.${type}`), data, (err) => {
 		err 
 		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `/${directory}/Data_Info_${timestamp}.json`), JSON.stringify(log), (err) => {
+		: fs.writeFile(path.join(__dirname, `/${directory}/POST_Info_${timestamp}.json`), JSON.stringify(log), (err) => {
 			if (err) {
 				console.warn(err);
 			} else {
@@ -131,11 +131,17 @@ function getElevationData(data, timestamp){
 					res.on('end', () => {
 						writeToFile2(JSON.parse(result), 'altitude', options, 'json');
 					})
+
+					res.on('error', (error) => {
+						console.log('res error');
+						console.error(error);
+					})
 				});
 
 	console.log(postObj);
 
 	req.on('error', (error) => {
+		console.log('req error');
 		console.error(error);
 	})
 
