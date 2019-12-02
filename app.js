@@ -111,7 +111,7 @@ function writeToFile2(data, directory, log, type){
 function getElevationData(data, timestamp){
 	const postObj = JSON.stringify({ locations: data }), 
 		  options = {
-			hostname: 'api.open-elevation.com',
+			hostname: 'http://0.0.0.0:10000/',
 			path: '/api/v1/lookup',
 			method: 'POST',
 			headers: {
