@@ -1,0 +1,28 @@
+{
+  "name": "coordinate_generator",
+  "version": "1.0.0",
+  "description": "Generates X, Y, Z grid data based on inputs. SRTM TIF Python module included.",
+  "main": "app.js",
+  "dependencies": {
+    "es6-promise": "^4.2.8",
+    "http": "^0.0.0",
+    "isomorphic-fetch": "^2.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mpaccione/coordinate_generator.git"
+  },
+  "keywords": [
+    "GIS"
+  ],
+  "author": "Michael Paccione",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mpaccione/coordinate_generator/issues"
+  },
+  "homepage": "https://github.com/mpaccione/coordinate_generator#readme"
+}

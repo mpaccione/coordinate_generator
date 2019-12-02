@@ -4,7 +4,7 @@
 
 // Modules
 const fs   = require('fs'),
-	  https = require('https'), 
+	  http = require('http'), 
 	  path = require('path');
 
 
@@ -19,6 +19,7 @@ const area		= 3600, // 60 x 60, 60KM^2
 				  ],
 	  direction = "column", // or Row
 	  diviser   = 600, // √(area) * 10 => (0.1KM Points)
+	  name 		= "Everest",
 	  system    = "km",
 	  type 		= "json"; // or "json"
 
@@ -71,10 +72,10 @@ function writeToFile(data, direction, directory, log, type){
 
 	dataFixed = type == "csv" ? "LAT,LONG,ALT\n"+data.map(e => e.join(",")).join("\n") : JSON.stringify(data);
 
-	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Data_${timestamp}.${type}`), dataFixed, (err) => {
+	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Data_${name}_${timestamp}.${type}`), dataFixed, (err) => {
 		err 
 		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `/${directory}/Data_Info_${timestamp}.json`), JSON.stringify(log), (err) => {
+		: fs.writeFile(path.join(__dirname, `/${directory}/Data_Info_${name}_${timestamp}.json`), JSON.stringify(log), (err) => {
 			if (err) {
 				console.warn(err);
 			} else {
@@ -90,10 +91,10 @@ function writeToFile(data, direction, directory, log, type){
 function writeToFile2(data, directory, log, type){
 	const timestamp = new Date().getTime();
 
-	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Output_${timestamp}.${type}`), data, (err) => {
+	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Output_${name}_${timestamp}.${type}`), data, (err) => {
 		err 
 		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `/${directory}/POST_Info_${timestamp}.json`), JSON.stringify(log), (err) => {
+		: fs.writeFile(path.join(__dirname, `/${directory}/POST_Info_${name}_${timestamp}.json`), JSON.stringify(log), (err) => {
 			if (err) {
 				console.warn(err);
 			} else {
@@ -111,7 +112,8 @@ function writeToFile2(data, directory, log, type){
 function getElevationData(data, timestamp){
 	const postObj = JSON.stringify({ locations: data }), 
 		  options = {
-			hostname: 'http://0.0.0.0:10000/',
+			hostname: '0.0.0.0',
+			port: '10000',
 			path: '/api/v1/lookup',
 			method: 'POST',
 			headers: {
@@ -119,7 +121,7 @@ function getElevationData(data, timestamp){
 		      'Content-Type': 'application/json'
 		    }
 		  },
-		  req = https.request(options, (res) => {
+		  req = http.request(options, (res) => {
 					console.log(`statusCode: ${res.statusCode}`);
 					let result;
 
@@ -129,6 +131,8 @@ function getElevationData(data, timestamp){
 					})
 
 					res.on('end', () => {
+						console.log('result');
+						console.log(result);
 						writeToFile2(JSON.parse(result), 'altitude', options, 'json');
 					})
 
@@ -138,6 +142,8 @@ function getElevationData(data, timestamp){
 					})
 				});
 
+	// console.log("req");
+	// console.log(req);
 	console.log(postObj);
 
 	req.on('error', (error) => {
