@@ -85,7 +85,6 @@ def body_to_locations():
     :return: 
     """
     # print(request.json.get('locations', None))
-    print(request);
 
     try:
         locations = request.json.get('locations', None)
@@ -154,4 +153,4 @@ def post_lookup():
         """
     return do_lookup(body_to_locations)
 
-run(host='0.0.0.0', port=10000, server='gunicorn', workers=4)
+run(host='0.0.0.0', port=10000, server='gunicorn', workers=4, timeout=120)

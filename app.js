@@ -80,7 +80,7 @@ function writeToFile(data, direction, directory, log, type){
 			if (err) {
 				console.warn(err);
 			} else {
-				console.log("File Write Successful");
+				console.log("LAT, LONG, File Write Successful");
 				if (type == "json") {
 					getElevationData(data, timestamp);
 				}
@@ -92,17 +92,16 @@ function writeToFile(data, direction, directory, log, type){
 function writeToFile2(data, directory, log, type){
 	const timestamp = new Date().getTime();
 
-	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Output_${name}_${timestamp}.${type}`), data, (err) => {
+	const dataFixed = data.substring(9, data.length);
+
+	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Output_${name}_${timestamp}.${type}`), dataFixed, (err) => {
 		err 
 		? console.warn(err) 
 		: fs.writeFile(path.join(__dirname, `/${directory}/POST_Info_${name}_${timestamp}.json`), JSON.stringify(log), (err) => {
 			if (err) {
 				console.warn(err);
 			} else {
-				console.log("File Write Successful");
-				if (type == "json") {
-					getElevationData(data, timestamp);
-				}
+				console.log("LAT, LONG, ALT, File Write Successful");
 			}
 		  })
 	})
@@ -135,14 +134,11 @@ function getElevationData(data, timestamp){
 					let result;
 
 					res.on('data', (d) => {
-						process.stdout.write(d);
 						result += d;
 					})
 
 					res.on('end', () => {
-						console.log('result');
-						console.log(result);
-						writeToFile2(JSON.parse(result), 'altitude', options, 'json');
+						writeToFile2(result, 'altitude', options, 'json');
 					})
 
 					res.on('error', (error) => {
@@ -150,12 +146,6 @@ function getElevationData(data, timestamp){
 						console.error(error);
 					})
 				});
-
-	// console.log("req");
-	// console.log(req);
-	console.log(postObj);
-	console.log("Buffer ByteLength");
-	console.log(Buffer.byteLength(postObj));
 
 	req.on('error', (error) => {
 		console.log('req error');
