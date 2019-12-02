@@ -1,0 +1,3 @@
+[submodule "api/elevation-srtm-tiff"]
+	path = api/elevation-srtm-tiff
+	url = https://github.com/bopen/elevation.git

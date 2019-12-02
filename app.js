@@ -3,9 +3,10 @@
 ///////////////////////////////////////////
 
 // Modules
-const fs   = require('fs'),
-	  http = require('http'), 
-	  path = require('path');
+const Agent = require('agentkeepalive'),
+	  fs    = require('fs'),
+	  http  = require('http'), 
+	  path  = require('path');
 
 
 // Placeholder Data is Mt.Everest
@@ -110,15 +111,23 @@ function writeToFile2(data, directory, log, type){
 
 
 function getElevationData(data, timestamp){
-	const postObj = JSON.stringify({ locations: data }), 
+	const keepaliveAgent = new Agent({
+		  	maxSockets: 100,
+		  	maxFreeSockets: 10,
+  			timeout: 480000, // active socket keepalive for 4 minutes
+  	   		freeSocketTimeout: 120000, // free socket keepalive for 60 seconds
+		  }),
+		  postObj = JSON.stringify({ locations: data }), 
 		  options = {
+		  	agent: keepaliveAgent,
 			hostname: '0.0.0.0',
 			port: '10000',
 			path: '/api/v1/lookup',
 			method: 'POST',
 			headers: {
 		      'Accept': 'application/json',
-		      'Content-Type': 'application/json'
+		      'Content-Type': 'application/json',
+		      'Content-Length': Buffer.byteLength(postObj)
 		    }
 		  },
 		  req = http.request(options, (res) => {
@@ -145,6 +154,8 @@ function getElevationData(data, timestamp){
 	// console.log("req");
 	// console.log(req);
 	console.log(postObj);
+	console.log("Buffer ByteLength");
+	console.log(Buffer.byteLength(postObj));
 
 	req.on('error', (error) => {
 		console.log('req error');
@@ -153,5 +164,11 @@ function getElevationData(data, timestamp){
 
 	req.write(postObj);
 	req.end();
+
+	setTimeout(() => {
+	  if (keepaliveAgent.statusChanged) {
+	    console.log('[%s] agent status changed: %j', Date(), keepaliveAgent.getCurrentStatus());
+	  }
+	}, 2000);
 
 }
