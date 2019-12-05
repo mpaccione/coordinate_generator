@@ -15,8 +15,8 @@ const Agent = require('agentkeepalive'),
 // [LAT, LONG, ALT] => [y, x, 0]
 const area		= 3600, // 60 x 60, 60KM^2
 	  coordArr  = [
-					[87.230674, 27.680334], // Top Left Corner
-					[86.622876, 28.084160]  // Bottom Right Corner
+					[86.622876, 28.084160], // Top Left Corner
+					[87.230674, 27.680334]  // Bottom Right Corner
 				  ],
 	  direction = "column", // or Row
 	  diviser   = 600, // √(area) * 10 => (0.1KM Points)
@@ -89,24 +89,49 @@ function writeToFile(data, direction, directory, log, type){
 	})
 }
 
-function writeToFile2(data, directory, log, type){
-	const timestamp = new Date().getTime();
-
-	const dataFixed = data.substring(9, data.length);
-
-	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Output_${name}_${timestamp}.${type}`), dataFixed, (err) => {
+function writeToFile2(data, directory1, directory2, log, type, timestamp, message){
+	fs.writeFile(path.join(__dirname, `${directory1}_${name}_${timestamp}.${type}`), data, (err) => {
 		err 
 		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `/${directory}/POST_Info_${name}_${timestamp}.json`), JSON.stringify(log), (err) => {
+		: fs.writeFile(path.join(__dirname, `${directory2}_${name}_${timestamp}.json`), JSON.stringify(log), (err) => {
 			if (err) {
 				console.warn(err);
 			} else {
-				console.log("LAT, LONG, ALT, File Write Successful");
+				console.log(message);
 			}
 		  })
 	})
 }
 
+function writeToFile3(data, timestamp){
+	console.log('writeToFile3');
+	const GRID_SIZE = 1;
+	const SUBGRID_SIZE = 10;
+
+	let grid = new Array(GRID_SIZE).fill(new Array(GRID_SIZE));
+
+		//LOOP OVER EVERY GRID SQUARE
+		for (let j = 0; j < GRID_SIZE; j++){
+			for(let i = 0; i < GRID_SIZE; i++){
+				//FOR EACH SQUARE IN GRID
+					//TODO			
+				grid[i][j] = new Array(SUBGRID_SIZE).fill(new Array(SUBGRID_SIZE))
+				//MAKE SUBGRID
+				for(let z = 0; z < SUBGRID_SIZE; z++){
+					for(let y = 0; y < SUBGRID_SIZE; y++){
+						//EACH SQUARE IN SUBGRID
+						const offset = ((i * 10) + y) + (600 * ((10 * j) + z))
+						// grid[i][j][y][z] = (data["results"][offset])
+						grid[j][i][z][y] = {j, i, y, z, offset};
+						console.log(grid[j][i][z][y]);
+					}
+				}
+			}
+		}
+
+		writeToFile2(JSON.stringify(grid), `/grid/Grid_Output_${name}_${timestamp}.json`, `/grid/Grid_Info_${name}_${timestamp}.json`, {"gridSize": GRID_SIZE, "subgridSize": SUBGRID_SIZE}, 'json', timestamp, "Grid File Write Successful");
+
+}
 
 
 function getElevationData(data, timestamp){
@@ -131,6 +156,7 @@ function getElevationData(data, timestamp){
 		  },
 		  req = http.request(options, (res) => {
 					console.log(`statusCode: ${res.statusCode}`);
+					const timestamp = new Date().getTime();
 					let result;
 
 					res.on('data', (d) => {
@@ -138,7 +164,10 @@ function getElevationData(data, timestamp){
 					})
 
 					res.on('end', () => {
-						writeToFile2(result, 'altitude', options, 'json');
+						const resultFixed = result.substring(9, result.length);
+						console.log(resultFixed);
+						writeToFile2(resultFixed, `/altitude/Coord_Output_${name}_${timestamp}.json`, `/altitude/POST_Info_${name}_${timestamp}.json`, options, 'json', timestamp, "LAT, LONG, ALT, File Write Successful");
+						writeToFile3(JSON.parse(resultFixed), 60, 600, timestamp);
 					})
 
 					res.on('error', (error) => {
