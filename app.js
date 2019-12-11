@@ -26,8 +26,8 @@ const area		= 3600, // 60 x 60, 60KM^2
 
 
 // Runtime
-// outputCoordinateArr(coordArr, direction, diviser, system, type);
-gridDebugger("Grid_Output_Everest_60_1575574389046.json_Everest_1575574389046.json");
+outputCoordinateArr(coordArr, direction, diviser, system, type);
+//gridDebugger("Debugging_Data_Everest_1576089308726.json");
 
 
 // Functions
@@ -65,6 +65,8 @@ function outputCoordinateArr(coordArr, direction, diviser, system){
 	};
 
 	writeToFile(resultArr, direction, "coordinates", log, type);
+	// const timestamp = new Date().getTime();
+	//getElevationData(resultArr, timestamp);
 }
 
 
@@ -104,38 +106,56 @@ function writeToFile2(data, directory1, directory2, log, type, timestamp, messag
 	})
 }
 
+function writeToFile4(data, directory1, directory2, log, message){
+	fs.writeFile(path.join(__dirname, `${directory1}`), data, (err) => {
+		err 
+		? console.warn(err) 
+		: fs.writeFile(path.join(__dirname, `${directory2}`), JSON.stringify(log), (err) => {
+			if (err) {
+				console.warn(err);
+			} else {
+				console.log(message);
+			}
+		  })
+	})
+}
+
 function gridDebugger(fileName){
 	fs.readFile(path.join(__dirname, `/grid/${fileName}`), "utf8", (err, fileData) => {
 		err ? console.warn(err) : (function(){
 			const GRID_SIZE = 60;
 			const SUBGRID_SIZE = 10;
 			const data = JSON.parse(fileData);
+			console.log("gridDebugger");
 
-			console.log(data);
-			console.log(data.length)
+			// console.log(data['results']);
+			// console.log(data['results'].length)
 
 			let grid = new Array(GRID_SIZE).fill(new Array(GRID_SIZE));
 
 			//LOOP OVER EVERY GRID SQUARE
 			for (let j = 0; j < GRID_SIZE; j++){
-				for(let i = 0; i < GRID_SIZE; i++){
+				for(let k = 0; k < GRID_SIZE; k++){
 					//FOR EACH SQUARE IN GRID
-					grid[i][j] = new Array(SUBGRID_SIZE).fill(new Array(SUBGRID_SIZE))
+					grid[k][j] = new Array(SUBGRID_SIZE).fill(new Array(SUBGRID_SIZE))
 					//MAKE SUBGRID
-					for(let z = 0; z < SUBGRID_SIZE; z++){
-						for(let y = 0; y < SUBGRID_SIZE; y++){
+					for(let a = 0; a < SUBGRID_SIZE; a++){
+						for(let b = 0; b < SUBGRID_SIZE; b++){
 							//EACH SQUARE IN SUBGRID
-							const offset = ((i * 10) + y) + (600 * ((10 * j) + z))
-							// grid[i][j][y][z] = data["results"][offset];
-							// console.log({j, i, y, z, offset});
+							const offset = ((k * 10) + b) + (600 * ((10 * j) + a))
+							grid[k][j][b][a] = data["results"][offset];
+							
+							// console.log({j, k, b, a, offset});
 							// console.log(offset);
-							// console.log(data[offset]);
-							//console.log(data[offset].longitude);
+							// console.log(data["results"][offset]);
+							// console.log(data['results'][offset].longitude);
 							//console.log(JSON.stringify(grid))
 						}
 					}
 				}
 			}
+
+			console.log(JSON.stringify(grid));
 			
 		})(fileData)
 	})
@@ -158,7 +178,8 @@ function writeToFile3(data, timestamp){
 				for(let z = 0; z < SUBGRID_SIZE; z++){
 					for(let y = 0; y < SUBGRID_SIZE; y++){
 						//EACH SQUARE IN SUBGRID
-						const offset = ((i * 10) + y) + (600 * ((10 * j) + z))
+						const offset = ((j * 10) + z) + (600 * ((10 * i) + y))
+						//console.log(data["results"]);
 						grid[i][j][y][z] = data["results"][offset];
 						//grid[j][i][z][y] = {j, i, y, z, offset};
 						//console.log(JSON.stringify(grid))
@@ -167,12 +188,13 @@ function writeToFile3(data, timestamp){
 			}
 		}
 		//console.log(JSON.stringify(grid))
-		// writeToFile2(JSON.stringify(grid), `/grid/Grid_Output_${name}_${GRID_SIZE}_${timestamp}.json`, `/grid/Grid_Info_${name}_${GRID_SIZE}_${timestamp}.json`, {"gridSize": GRID_SIZE, "subgridSize": SUBGRID_SIZE}, 'json', timestamp, "Grid File Write Successful");
+		writeToFile4(JSON.stringify(grid), `/grid/Grid_Output_${name}_${GRID_SIZE}_${timestamp}.json`, `/grid/Grid_Info_${name}_${GRID_SIZE}_${timestamp}.json`, {"gridSize": GRID_SIZE, "subgridSize": SUBGRID_SIZE}, "Grid File Write Successful");
 
 }
 
 
 function getElevationData(data, timestamp){
+	console.log("getElevationData")
 	const keepaliveAgent = new Agent({
 		  	maxSockets: 100,
 		  	maxFreeSockets: 10,
@@ -203,9 +225,12 @@ function getElevationData(data, timestamp){
 
 					res.on('end', () => {
 						const resultFixed = result.substring(9, result.length);
-						console.log(resultFixed);
+						// console.log(resultFixed);
 						writeToFile2(resultFixed, `/altitude/Coord_Output_${name}_${timestamp}.json`, `/altitude/POST_Info_${name}_${timestamp}.json`, options, 'json', timestamp, "LAT, LONG, ALT, File Write Successful");
 						writeToFile3(JSON.parse(resultFixed), timestamp);
+						// fs.writeFile(path.join(__dirname, `/grid/Debugging_Data_${name}_${timestamp}.json`), resultFixed, (err) => {
+						// 	err ? console.warn(err) : console.log("Debugging Data File Written");
+						// })
 					})
 
 					res.on('error', (error) => {
