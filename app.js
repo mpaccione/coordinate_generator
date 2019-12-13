@@ -26,12 +26,18 @@ const area		= 3600, // 60 x 60, 60KM^2
 
 
 // Runtime
+// 1. outputCoordinateArr
+// 2. getElevationData
+// 3. createGrid
+
 outputCoordinateArr(coordArr, direction, diviser, system, type);
-//gridDebugger("Debugging_Data_Everest_1576089308726.json");
+// gridDebugger("Debugging_Data_Everest_60_1576089308726.json");
+
 
 
 // Functions
 function outputCoordinateArr(coordArr, direction, diviser, system){
+	console.log("outputCoordinateArr");
 	const longStart = (coordArr[0][0] - coordArr[1][0]) > 0 ? coordArr[0][0] : coordArr[1][0],
 		  latStart  = (coordArr[1][0] - coordArr[1][1]) > 0 ? coordArr[0][1] : coordArr[1][1], 
 		  longDiff  = Math.abs(coordArr[0][0] - coordArr[1][0]),
@@ -51,6 +57,10 @@ function outputCoordinateArr(coordArr, direction, diviser, system){
 		}
 	}
 
+	// formatting
+	dataFixed = type == "csv" ? "LAT,LONG,ALT\n"+resultArr.map(e => e.join(",")).join("\n") : JSON.stringify(resultArr);
+
+
 	const log = {
 		"coordArr" : coordArr,
 		"direction": direction,
@@ -64,134 +74,13 @@ function outputCoordinateArr(coordArr, direction, diviser, system){
 		"latIncr"  : latIncr
 	};
 
-	writeToFile(resultArr, direction, "coordinates", log, type);
-	// const timestamp = new Date().getTime();
-	//getElevationData(resultArr, timestamp);
-}
-
-
-function writeToFile(data, direction, directory, log, type){
-	const timestamp = new Date().getTime();
-	let   dataFixed;
-
-	dataFixed = type == "csv" ? "LAT,LONG,ALT\n"+data.map(e => e.join(",")).join("\n") : JSON.stringify(data);
-
-	fs.writeFile(path.join(__dirname, `/${directory}/Coord_Data_${name}_${timestamp}.${type}`), dataFixed, (err) => {
-		err 
-		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `/${directory}/Data_Info_${name}_${timestamp}.json`), JSON.stringify(log), (err) => {
-			if (err) {
-				console.warn(err);
-			} else {
-				console.log("LAT, LONG, File Write Successful");
-				if (type == "json") {
-					getElevationData(data, timestamp);
-				}
-			}
-		  })
-	})
-}
-
-function writeToFile2(data, directory1, directory2, log, type, timestamp, message){
-	fs.writeFile(path.join(__dirname, `${directory1}_${name}_${timestamp}.${type}`), data, (err) => {
-		err 
-		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `${directory2}_${name}_${timestamp}.json`), JSON.stringify(log), (err) => {
-			if (err) {
-				console.warn(err);
-			} else {
-				console.log(message);
-			}
-		  })
-	})
-}
-
-function writeToFile4(data, directory1, directory2, log, message){
-	fs.writeFile(path.join(__dirname, `${directory1}`), data, (err) => {
-		err 
-		? console.warn(err) 
-		: fs.writeFile(path.join(__dirname, `${directory2}`), JSON.stringify(log), (err) => {
-			if (err) {
-				console.warn(err);
-			} else {
-				console.log(message);
-			}
-		  })
-	})
-}
-
-function gridDebugger(fileName){
-	fs.readFile(path.join(__dirname, `/grid/${fileName}`), "utf8", (err, fileData) => {
-		err ? console.warn(err) : (function(){
-			const GRID_SIZE = 60;
-			const SUBGRID_SIZE = 10;
-			const data = JSON.parse(fileData);
-			console.log("gridDebugger");
-
-			// console.log(data['results']);
-			// console.log(data['results'].length)
-
-			let grid = new Array(GRID_SIZE).fill(new Array(GRID_SIZE));
-
-			//LOOP OVER EVERY GRID SQUARE
-			for (let j = 0; j < GRID_SIZE; j++){
-				for(let k = 0; k < GRID_SIZE; k++){
-					//FOR EACH SQUARE IN GRID
-					grid[k][j] = new Array(SUBGRID_SIZE).fill(new Array(SUBGRID_SIZE))
-					//MAKE SUBGRID
-					for(let a = 0; a < SUBGRID_SIZE; a++){
-						for(let b = 0; b < SUBGRID_SIZE; b++){
-							//EACH SQUARE IN SUBGRID
-							const offset = ((k * 10) + b) + (600 * ((10 * j) + a))
-							grid[k][j][b][a] = data["results"][offset];
-							
-							// console.log({j, k, b, a, offset});
-							// console.log(offset);
-							// console.log(data["results"][offset]);
-							// console.log(data['results'][offset].longitude);
-							//console.log(JSON.stringify(grid))
-						}
-					}
-				}
-			}
-
-			console.log(JSON.stringify(grid));
-			
-		})(fileData)
-	})
-}
-
-function writeToFile3(data, timestamp){
-	console.log('writeToFile3');
-	const GRID_SIZE = 60;
-	const SUBGRID_SIZE = 10;
-
-	let grid = new Array(GRID_SIZE).fill(new Array(GRID_SIZE));
-
-		//LOOP OVER EVERY GRID SQUARE
-		for (let j = 0; j < GRID_SIZE; j++){
-			for(let i = 0; i < GRID_SIZE; i++){
-				//FOR EACH SQUARE IN GRID
-					//TODO			
-				grid[i][j] = new Array(SUBGRID_SIZE).fill(new Array(SUBGRID_SIZE))
-				//MAKE SUBGRID
-				for(let z = 0; z < SUBGRID_SIZE; z++){
-					for(let y = 0; y < SUBGRID_SIZE; y++){
-						//EACH SQUARE IN SUBGRID
-						const offset = ((j * 10) + z) + (600 * ((10 * i) + y))
-						//console.log(data["results"]);
-						grid[i][j][y][z] = data["results"][offset];
-						//grid[j][i][z][y] = {j, i, y, z, offset};
-						//console.log(JSON.stringify(grid))
-					}
-				}
-			}
+	writeToFile(dataFixed,`/coordinates/Coord_Data_${name}`, `/coordinates/Coord_Info_${name}`, log, type, function(timestamp){
+		if (type === "json") {
+			console.log("Lat, Long File Write Succesful");
+			getElevationData(JSON.parse(dataFixed), timestamp)
 		}
-		//console.log(JSON.stringify(grid))
-		writeToFile4(JSON.stringify(grid), `/grid/Grid_Output_${name}_${GRID_SIZE}_${timestamp}.json`, `/grid/Grid_Info_${name}_${GRID_SIZE}_${timestamp}.json`, {"gridSize": GRID_SIZE, "subgridSize": SUBGRID_SIZE}, "Grid File Write Successful");
-
+	});
 }
-
 
 function getElevationData(data, timestamp){
 	console.log("getElevationData")
@@ -225,12 +114,13 @@ function getElevationData(data, timestamp){
 
 					res.on('end', () => {
 						const resultFixed = result.substring(9, result.length);
-						// console.log(resultFixed);
-						writeToFile2(resultFixed, `/altitude/Coord_Output_${name}_${timestamp}.json`, `/altitude/POST_Info_${name}_${timestamp}.json`, options, 'json', timestamp, "LAT, LONG, ALT, File Write Successful");
-						writeToFile3(JSON.parse(resultFixed), timestamp);
-						// fs.writeFile(path.join(__dirname, `/grid/Debugging_Data_${name}_${timestamp}.json`), resultFixed, (err) => {
-						// 	err ? console.warn(err) : console.log("Debugging Data File Written");
-						// })
+						console.log("resultFixed");
+						console.log(resultFixed);
+
+						writeToFile(resultFixed, `/altitude/Coord_Output_${name}`, `/altitude/POST_Info_${name}`, options, 'json', function(timestamp){
+							console.log("LAT, LONG, ALT, File Write Successful");
+							createGrid(JSON.parse(resultFixed));
+						});
 					})
 
 					res.on('error', (error) => {
@@ -254,3 +144,46 @@ function getElevationData(data, timestamp){
 	}, 2000);
 
 }
+
+function createGrid(data){
+	console.log('createGrid');
+	const GRID_SIZE = 60;
+	const SUBGRID_SIZE = 10;
+
+	let grid = new Array(GRID_SIZE).fill(new Array(GRID_SIZE));
+
+	//LOOP OVER EVERY GRID SQUARE
+	for (let j = 0; j < GRID_SIZE; j++){
+		for (let i = 0; i < GRID_SIZE; i++){
+			// FOR EACH SQUARE IN GRID
+			grid[i][j] = new Array(SUBGRID_SIZE).fill(new Array(SUBGRID_SIZE))
+			// MAKE SUBGRID
+			for (let z = 0; z < SUBGRID_SIZE; z++){
+				for (let y = 0; y < SUBGRID_SIZE; y++){
+					// EACH SQUARE IN SUBGRID
+					const offset = ((j * 10) + z) + (600 * ((10 * i) + y))
+					grid[i][j][y][z] = data["results"][offset];
+				}
+			}
+		}
+	}
+
+	writeToFile(JSON.stringify(grid), `/grid/Grid_Output_${name}_${GRID_SIZE}`, `/grid/Grid_Info_${name}_${GRID_SIZE}`, {"gridSize": GRID_SIZE, "subgridSize": SUBGRID_SIZE}, 'json', function(){
+		console.log("Grid File Write Successful");
+	});
+
+}
+
+function writeToFile(data, directory1, directory2, log, type, callback){
+	console.log('writeToFile');
+	const timestamp = new Date().getTime();
+
+	fs.writeFile(path.join(__dirname, `${directory1}_${timestamp}.${type}`), dataFixed, (err) => {
+		err 
+		? console.warn(err) 
+		: fs.writeFile(path.join(__dirname, `${directory2}_${timestamp}.json`), JSON.stringify(log), (err) => {
+			err ? console.warn(err) : callback(timestamp);
+		  })
+	})
+}
+
