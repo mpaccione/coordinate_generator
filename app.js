@@ -178,7 +178,7 @@ function writeToFile(data, directory1, directory2, log, type, callback){
 	console.log('writeToFile');
 	const timestamp = new Date().getTime();
 
-	fs.writeFile(path.join(__dirname, `${directory1}_${timestamp}.${type}`), dataFixed, (err) => {
+	fs.writeFile(path.join(__dirname, `${directory1}_${timestamp}.${type}`), data, (err) => {
 		err 
 		? console.warn(err) 
 		: fs.writeFile(path.join(__dirname, `${directory2}_${timestamp}.json`), JSON.stringify(log), (err) => {
