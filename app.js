@@ -150,13 +150,14 @@ function createGrid(data){
 	const GRID_SIZE = 60;
 	const SUBGRID_SIZE = 10;
 
-	let grid = new Array(GRID_SIZE).fill(new Array(GRID_SIZE));
+	let grid = Array.from({ length: GRID_SIZE }, () => Array.from({ length: GRID_SIZE }, () => ( [] ) ))
 
 	//LOOP OVER EVERY GRID SQUARE
 	for (let j = 0; j < GRID_SIZE; j++){
 		for (let i = 0; i < GRID_SIZE; i++){
 			// FOR EACH SQUARE IN GRID
-			grid[i][j] = new Array(SUBGRID_SIZE).fill(new Array(SUBGRID_SIZE))
+			grid[i][j] = Array.from({ length: SUBGRID_SIZE }, () => Array.from({ length: SUBGRID_SIZE }, () => ( [] ) ))
+
 			// MAKE SUBGRID
 			for (let z = 0; z < SUBGRID_SIZE; z++){
 				for (let y = 0; y < SUBGRID_SIZE; y++){
